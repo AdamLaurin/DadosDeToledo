@@ -1,0 +1,47 @@
+{
+	"images": [
+		{
+			"name": "opponentPortraits",
+			"path": "./assets/images/opponent-portraits.png",
+			"width": 307,
+			"height": 1077
+		},
+		{
+			"name": "controlsStone",
+			"path": "./assets/images/controls-stone.png",
+			"width": 960,
+			"height": 540
+		},
+		{
+			"name": "dice",
+			"path": "./assets/images/dice.png",
+			"width": 448,
+			"height": 32
+		},
+		{
+			"name": "board",
+			"path": "./assets/images/board.png",
+			"width": 300,
+			"height": 300
+		},
+		{
+			"name": "parchment",
+			"path": "./assets/images/parchment.png",
+			"width": 321,
+			"height": 207
+		}
+	],
+	"fonts": [
+		{
+			"name": "manufacturingConsent",
+			"path": "./assets/fonts/ManufacturingConsent-Regular.ttf"
+		},
+		{
+			"name": "roboto",
+			"path": "./assets/fonts/Roboto-Black.ttf"
+		}
+	],
+	"sounds": [
+		
+	]
+}

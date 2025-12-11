@@ -22,3 +22,5 @@ The rules for each are as follows:
 
 ### More Info
 This project was originally created as the final project for a game programming course in Fall 2025. Files in the lib folder were created throughout the semester by my teacher, Vikram Singh. The rest of the code is my own. Assets that were not created by me or made available through the public domain are credited accordingly.
+
+This project is still a work in progress.

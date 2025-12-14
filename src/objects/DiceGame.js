@@ -2,15 +2,19 @@ import Input from "../../lib/Input.js";
 import { getRandomPositiveNumber } from "../../lib/Random.js";
 import Character from "../entities/Character.js";
 import Opponent from "../entities/Opponent.js";
+import DieStateName from "../enums/DieStateName.js";
 import Direction from "../enums/Direction.js";
 import GamePhase from "../enums/GamePhase.js";
-import GameStateName from "../enums/GameStateName.js";
-import { CANVAS_HEIGHT, CANVAS_WIDTH, context, input, matter, stateStack, timer } from "../globals.js";
+import SoundName from "../enums/SoundName.js";
+import { CANVAS_HEIGHT, CANVAS_WIDTH, context, input, matter, sounds, stateStack, timer, world } from "../globals.js";
+import GameOverState from "../states/GameOverState.js";
 import PlayState from "../states/PlayState.js";
 import ShowResultState from "../states/ShowResultState.js";
 import WagerState from "../states/WagerState.js";
 import Board from "./Board.js";
 import Die from "./Die.js";
+
+const { Composite } = matter;
 
 export default class DiceGame {
     // Values for setting the Show Result State after someone wins the match.
@@ -44,6 +48,9 @@ export default class DiceGame {
 
         // The specific phase of the current game.
         this.gamePhase = GamePhase.Wager;
+
+        // To enable or disable the dice total display at the end of each roll.
+        this.enableDiceTotalDisplay = true;
     }
 
     update(dt) {
@@ -61,8 +68,9 @@ export default class DiceGame {
         switch (this.gamePhase) {
 
             case GamePhase.Wager:
+                this.saveData();
                 // Bring up wager state to get player's wager, and then proceed to the battle phase.
-                stateStack.push(new WagerState(this.player.money, this.opponent.money, (wager) => {
+                stateStack.push(new WagerState(this.player, this.opponent, (wager) => {
                     this.wagerAmount = wager;
                 }));
                 this.gamePhase = GamePhase.Battle
@@ -75,6 +83,7 @@ export default class DiceGame {
                 break;
 
             case GamePhase.BattleRolling:
+                this.saveData();
                 // Bring up the result UI showing who won the battle.
                 stateStack.push(new ShowResultState(`${this.isPlayerTurn ? "You Go First" : "Opponent Goes First"}`));
                 this.gamePhase = GamePhase.ToRoll;
@@ -108,6 +117,7 @@ export default class DiceGame {
 
             case GamePhase.Rolling:
                 this.isFirstRoll = false;
+                this.saveData();
                 // What to do with the roll will depend on the specific game being played.
                 this.checkRoll();
                 break;
@@ -120,20 +130,13 @@ export default class DiceGame {
             case GamePhase.PostGame:
                 if (this.player.isBroke()) {
                     // If the player has run out of money, they lose!
-                    stateStack.push(GameStateName.GameOver);
+                    stateStack.push(new GameOverState());
                 } else {
-                    // Go back to Opponent selection, (check there if any opponents still have money, if not: Victory State)
+                    // If the opponent is broke, go back to Opponent Selection.
+                    stateStack.pop();
                 }
                 break;
         }
-
-
-        // Misc testing stuff to remove.
-        // if (input.isKeyPressed(Input.KEYS.ENTER)) {
-        //     this.rollDice();
-        // } else if (input.isKeyPressed(Input.KEYS.BACKSLASH)) {
-        //     this.rollBattle();
-        // }
     }
 
     /**
@@ -154,11 +157,13 @@ export default class DiceGame {
      * Roll all the game dice and add up their values into rolledValue.
      */
     rollDice() {
+        sounds.play(SoundName.Dice);
+
         // Roll from the right as the player, from the left as the opponent.
         const positionX = this.isPlayerTurn ? CANVAS_WIDTH / 2 + Board.WIDTH / 4 : CANVAS_WIDTH / 2 - Board.WIDTH / 4;
         const direction = this.isPlayerTurn ? Direction.Left : Direction.Right;
 
-        this.rolledValue = 0; // might replace this by a returned value?s
+        this.rolledValue = 0;
         this.dice.forEach((die) => {
             const positionY = getRandomPositiveNumber(
                 CANVAS_HEIGHT / 2 - Board.HEIGHT / 8,
@@ -175,6 +180,8 @@ export default class DiceGame {
      * according to the result of the battle.
      */
     rollBattle() {
+        sounds.play(SoundName.Dice);
+
         // Roll for player.
         this.dice[0].onRoll(Direction.Up, { x: CANVAS_WIDTH / 2, y: CANVAS_HEIGHT / 2 + Board.HEIGHT / 4 });
         let playerRoll = this.dice[0].value;
@@ -185,9 +192,10 @@ export default class DiceGame {
 
         // Move the third die offscreen so it doesn't get in the way.
         matter.Body.setPosition(this.dice[2].body, {
-            x: CANVAS_WIDTH - Die.WIDTH * 2,
-            y: 0
+            x: CANVAS_WIDTH + Die.WIDTH * 5,
+            y: -10
         });
+        this.dice[2].body.velocity = { x: 0, y: 0 };
 
         // If there's a tie, fudge it so that the player wins the battle ;)
         if (playerRoll === opponentRoll) {
@@ -223,12 +231,43 @@ export default class DiceGame {
         }
     }
 
+    saveData() {
+        localStorage.setItem("game", JSON.stringify(this, (key, value) => {
+            // You can't stringify matter bodies due to circular reference, so the dice need to only save important, raw properties.
+            if (key === "dice") {
+                return value.map((die) => {
+                    return { value: die.value, position: die.body.position }
+                });
+            }
+            return value;
+        }));
+    }
+
+    loadData(gameData) {
+        this.gamePhase = gameData.gamePhase;
+        this.rolledValue = gameData.rolledValue;
+        this.wagerAmount = gameData.wagerAmount;
+        this.isPlayerTurn = gameData.isPlayerTurn;
+        this.isFirstRoll = gameData.isFirstRoll;
+        this.enableDiceTotalDisplay = gameData.enableDiceTotalDisplay;
+
+        // Update the properties of the dice.
+        this.dice.forEach((die, index) => {
+            die.value = gameData.dice[index].value;
+            die.stateMachine.change(DieStateName.Idle);
+            matter.Body.setPosition(
+                die.body,
+                gameData.dice[index].position
+            );
+        });
+    }
+
     render() {
         this.dice.forEach((die) => {
             die.render();
         });
 
-        if (!this.isRolling && !this.isFirstRoll) {
+        if (this.enableDiceTotalDisplay && !this.isRolling && !this.isFirstRoll) {
             // Display the latest roll total.
             const displayDiceScale = 2;
             const displayDiceY = 100
@@ -274,8 +313,5 @@ export default class DiceGame {
             );
             context.restore();
         }
-
-        // Temp display phase
-        context.fillText(`${this.gamePhase}`, CANVAS_WIDTH - 200, CANVAS_HEIGHT - 200)
     }
 }

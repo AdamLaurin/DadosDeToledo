@@ -1,7 +1,8 @@
 import Character from "../../entities/Character.js";
 import Opponent from "../../entities/Opponent.js";
 import GamePhase from "../../enums/GamePhase.js";
-import { CANVAS_HEIGHT, context, stateStack } from "../../globals.js";
+import SoundName from "../../enums/SoundName.js";
+import { CANVAS_HEIGHT, context, sounds, stateStack } from "../../globals.js";
 import ShowResultState from "../../states/ShowResultState.js";
 import DiceGame from "../DiceGame.js";
 
@@ -39,6 +40,7 @@ export default class Triga extends DiceGame {
                 `Triga!\n${this.didPlayerWin ? "You Win" : `${this.opponent.name} Wins`}`,
                 { holdDuration: DiceGame.RESULT_STATE_HOLD_DURATION }
             ));
+            sounds.play(SoundName.GoldSack);
             return;
         }
 
@@ -53,6 +55,7 @@ export default class Triga extends DiceGame {
                     holdDuration: DiceGame.RESULT_STATE_HOLD_DURATION
                 }
             ));
+            sounds.play(SoundName.GoldSack);
             return;
         }
         if (this.rolledValue === this.opponentMark) {
@@ -65,6 +68,7 @@ export default class Triga extends DiceGame {
                     holdDuration: DiceGame.RESULT_STATE_HOLD_DURATION
                 }
             ));
+            sounds.play(SoundName.GoldSack);
             return;
         }
 
@@ -92,6 +96,13 @@ export default class Triga extends DiceGame {
         return this.dice[0].value === this.dice[1].value && this.dice[0].value === this.dice[2].value;
     }
 
+    loadData(gameData) {
+        super.loadData(gameData);
+
+        this.playerMark = gameData.playerMark;
+        this.opponentMark = gameData.opponentMark;
+    }
+
     render() {
         super.render();
 
@@ -99,7 +110,7 @@ export default class Triga extends DiceGame {
         context.save();
         const textX = 40;
         const textY = CANVAS_HEIGHT - CANVAS_HEIGHT / 3;
-        context.fillStyle = 'black';
+        context.fillStyle = 'white';
         context.textAlign = 'left';
         context.font = '50px manufacturingConsent';
         context.fillText(`Your Mark:`, textX, textY);

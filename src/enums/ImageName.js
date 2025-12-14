@@ -3,7 +3,12 @@ const ImageName = {
     UIControls: "controlsStone",
     Dice: "dice",
     Board: "board",
-    Parchment: "parchment"
+    Parchment: "parchment",
+    Backdrop: "backdrop",
+    StonePanel: "stonePanel",
+    StonePanel2: "stonePanel2",
+    Money: "money",
+    Hand: "hand"
 };
 
 export default ImageName;

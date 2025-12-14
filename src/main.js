@@ -34,6 +34,7 @@
  */
 
 import Game from '../lib/Game.js';
+import SoundName from './enums/SoundName.js';
 import {
 	canvas,
 	CANVAS_HEIGHT,
@@ -73,19 +74,23 @@ sounds.load(soundDefinitions);
 opponentFactory.load(opponentDefinitions);
 gameInstructionsFactory.load(gameInstructions);
 
-// Set up the state stack.
-stateStack.push(new TitleScreenState());
-
-const game = new Game(
-	stateStack,
-	context,
-	timer,
-	canvas.width,
-	canvas.height
-);
+context.save();
+context.font = "60px roboto";
+context.textAlign = "center";
+context.fillText("Click the Screen to Start", CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2);
+context.restore();
 
 document.addEventListener("click", () => {
-	document.getElementById("startScreen").style.display = "none";
+	// Set up the state stack.
+	stateStack.push(new TitleScreenState());
+
+	const game = new Game(
+		stateStack,
+		context,
+		timer,
+		canvas.width,
+		canvas.height
+	);
 
 	game.start();
 

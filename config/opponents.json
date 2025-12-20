@@ -32,6 +32,17 @@
             "greetings": [
                 "PLACEHOLDER"
             ]
+        },
+        {
+            "name": "PLACEHOLDER",
+            "fullName": "PLACEHOLDER",
+            "portraitDefinition": {
+                "x": 0,
+                "y": 719
+            },
+            "greetings": [
+                "PLACEHOLDER"
+            ]
         }
     ]
 }

@@ -11,6 +11,13 @@ export default class OpponentFactory {
 
         // Get an array of the game names so that they can be indexed for later.
         this.possibleGames = Object.values(DiceGameName);
+
+        // A dictionary to determine which games aren't yet assigned to any opponents.
+        // THIS IS NOT YET FULLY IMPLEMENTED
+        this.assignedGames = {};
+        this.possibleGames.forEach((game) => {
+            this.assignedGames[game] = false;
+        });
     }
 
     /**
